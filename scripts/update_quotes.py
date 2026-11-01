@@ -127,8 +127,8 @@ def read_quote(url, kind):
 
 def update():
     data = json.loads(DATA.read_text(encoding="utf-8"))
-    data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") != "itau"]
-    data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") != "maxicambios"]
+    # Se eliminan instituciones que ya no exponen una tasa pública estable para scraping.
+    data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") not in {"itau", "maxicambios"}]
     now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     errors = []
     for quote in data["quotes"]:
@@ -154,4 +154,3 @@ if __name__ == "__main__":
         print("Algunas fuentes no se actualizaron:\n- " + "\n- ".join(failures))
     else:
         print("Cotizaciones actualizadas.")
-
