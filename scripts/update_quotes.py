@@ -32,7 +32,12 @@ class Text(HTMLParser):
 
 def fetch(url):
     request = urllib.request.Request(
-        url, headers={"User-Agent": "CotizacionDolar/1.0", "Accept": "text/html,application/xml"}
+        url,
+        headers={
+            "User-Agent": "CotizacionDolar/1.0",
+            "Accept": "text/html,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        },
     )
     with urllib.request.urlopen(request, timeout=20) as response:
         if response.status != 200:
@@ -41,44 +46,102 @@ def fetch(url):
 
 
 def amount(raw):
-    value = raw.strip().replace("Gs.", "").replace("Gs", "").strip()
-    value = value.replace(".", "").replace(",", ".")
+    value = re.sub(r"[^0-9,\.\-]", "", str(raw).strip())
+    if not value or value in {"-", ".", ",", "-.", "-."}:
+        raise ValueError("importe no válido")
+
+    if "," in value and "." in value:
+        if value.rfind(",") > value.rfind("."):
+            value = value.replace(".", "").replace(",", ".")
+        else:
+            value = value.replace(",", "")
+    elif "," in value:
+        if value.count(",") > 1:
+            value = value.replace(",", "")
+        else:
+            value = value.replace(",", ".")
+    elif "." in value and value.count(".") > 1:
+        parts = value.split(".")
+        if len(parts[-1]) == 3:
+            value = "".join(parts)
+
     parsed = float(value)
     if parsed <= 0 or parsed > 20_000_000:
         raise ValueError("importe fuera de rango")
     return round(parsed)
 
 
-def parse_html(payload, cash=False):
+def clean_text(payload):
     parser = Text()
     parser.feed(payload.decode("utf-8", errors="replace"))
-    text = re.sub(r"\s+", " ", " ".join(parser.parts))
-    currency = r"(?:USD|D[oó]lar(?:es)?(?:\s+americano(?:s)?)?)"
-    modality = r".{0,180}?en\s+efectivo" if cash else ""
-    pattern = currency + modality + r".{0,240}?Venta(?:\s+Gs\.?)?\s*[:\-]?\s*([\d.,]+)"
-    match = re.search(pattern, text, flags=re.IGNORECASE)
-    if not match:
-        raise ValueError("no se encontró una venta USD etiquetada")
-    return amount(match.group(1))
+    return re.sub(r"\s+", " ", " ".join(parser.parts)).strip()
+
+
+def parse_html(payload, cash=False):
+    text = clean_text(payload)
+    if not text:
+        raise ValueError("la página no devolvió contenido legible")
+
+    patterns = []
+    if cash:
+        patterns.append(
+            r"(?:usd|d[oó]lar(?:es)?(?:\s+americano(?:s)?)?).{0,250}?(?:en\s+efectivo).{0,250}?(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)"
+        )
+    patterns.extend(
+        [
+            r"(?:usd|d[oó]lar(?:es)?(?:\s+americano(?:s)?)?).{0,250}?(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
+            r"(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
+            r"(?:\bcompra\b.*?\bventa\b.*?\b[\d\s.,]+\b)"
+        ]
+    )
+
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            candidate = match.group(1) if match.lastindex else match.group(0)
+            if match.lastindex:
+                return amount(candidate)
+            # Fallback for generic match that includes multiple labels:
+            venta = re.search(r"venta\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)", match.group(0), flags=re.IGNORECASE)
+            if venta:
+                return amount(venta.group(1))
+    raise ValueError("no se encontró una venta USD etiquetada")
 
 
 def parse_xml(payload):
     root = ET.fromstring(payload)
-    for coin in root.findall(".//moneda"):
+    for coin in root.iter():
+        if coin.tag.lower() != "moneda":
+            continue
         country = (coin.findtext("pais") or "").strip().casefold()
         kind = (coin.findtext("tipo") or "").strip().casefold()
-        if country in {"eeuu", "estados unidos", "usa"} and kind == "efectivo":
+        if country in {"eeuu", "estados unidos", "usa"} and kind in {"efectivo", "dolar"}:
             sale = coin.findtext("venta")
             if sale:
                 return amount(sale)
+    for coin in root.iter():
+        for item in ("venta", "sale", "valor"):
+            node = coin.find(item)
+            if node is not None and node.text:
+                text = node.text.strip()
+                if re.search(r"\d", text):
+                    return amount(text)
     raise ValueError("el XML no contiene venta USD en efectivo")
 
 
 def read_quote(url, kind):
     payload = fetch(url)
     if kind == "xml":
-        return parse_xml(payload)
-    return parse_html(payload, cash=kind == "ueno")
+        try:
+            return parse_xml(payload)
+        except (ValueError, ET.ParseError):
+            return parse_html(payload, cash=False)
+    if kind == "ueno":
+        try:
+            return parse_html(payload, cash=True)
+        except ValueError:
+            return parse_html(payload, cash=False)
+    return parse_html(payload, cash=False)
 
 
 def update():
@@ -106,3 +169,4 @@ if __name__ == "__main__":
         print("Algunas fuentes no se actualizaron:\n- " + "\n- ".join(failures))
     else:
         print("Cotizaciones actualizadas.")
+
