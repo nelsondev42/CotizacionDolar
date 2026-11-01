@@ -15,7 +15,6 @@ DATA = ROOT / "data" / "cotizaciones.json"
 SOURCES = {
     "atlas": ("https://www.bancoatlas.com.py/web", "html"),
     "ueno": ("https://www.ueno.com.py/cambio-de-moneda/", "ueno"),
-    "maxicambios": ("https://www.maxicambios.com.py//share", "maxicambios"),
 }
 
 
@@ -100,25 +99,6 @@ def parse_html(payload, cash=False):
     raise ValueError("no se encontró una venta USD etiquetada")
 
 
-def parse_maxicambios(payload):
-    text = clean_text(payload)
-    if not text:
-        raise ValueError("la página de Maxicambios no devolvió contenido legible")
-
-    patterns = [
-        r"(?:d[oó]lar|usd).{0,220}?(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
-        r"(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
-        r"(?:d[oó]lar|usd).{0,600}?([\d]{3,}(?:[\.,][\d]{3})*(?:[.,][\d]{1,2})?)",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, text, flags=re.IGNORECASE | re.DOTALL)
-        if match:
-            return amount(match.group(1))
-
-    raise ValueError("no se encontró una venta USD en Maxicambios")
-
-
 def parse_xml(payload):
     root = ET.fromstring(payload)
     for coin in root.iter():
@@ -137,8 +117,6 @@ def read_quote(url, kind):
     payload = fetch(url)
     if kind == "xml":
         return parse_xml(payload)
-    if kind == "maxicambios":
-        return parse_maxicambios(payload)
     if kind == "ueno":
         try:
             return parse_html(payload, cash=True)
@@ -150,13 +128,14 @@ def read_quote(url, kind):
 def update():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") != "itau"]
+    data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") != "maxicambios"]
     now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     errors = []
     for quote in data["quotes"]:
         if quote["id"] not in SOURCES:
             continue
         url, kind = SOURCES[quote["id"]]
-        quote["url"] = url if quote["id"] != "maxicambios" else "https://www.maxicambios.com.py/"
+        quote["url"] = url
         try:
             quote["sale"] = read_quote(url, kind)
             quote["observedAt"] = now

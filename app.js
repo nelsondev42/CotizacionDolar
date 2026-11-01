@@ -59,7 +59,7 @@ async function load() {
     const response = await fetch("./data/cotizaciones.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`No se pudo leer el archivo de datos (HTTP ${response.status}).`);
     const data = await response.json();
-    if (!data || !Array.isArray(data.quotes) || data.quotes.length < 3 || !data.quotes.every(validQuote)) {
+    if (!data || !Array.isArray(data.quotes) || data.quotes.length < 2 || !data.quotes.every(validQuote)) {
       throw new Error("El archivo de cotizaciones tiene un formato inesperado.");
     }
 

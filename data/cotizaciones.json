@@ -16,14 +16,6 @@
       "sale": 6060,
       "observedAt": "2026-11-01T01:13:26Z",
       "status": "available"
-    },
-    {
-      "id": "maxicambios",
-      "name": "Maxicambios",
-      "url": "https://www.maxicambios.com.py/",
-      "sale": null,
-      "observedAt": null,
-      "status": "unavailable"
     }
   ]
 }

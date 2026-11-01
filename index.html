@@ -1,40 +1,20 @@
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0b1220">
-    <meta name="description" content="Cotización de venta del dólar estadounidense en Paraguay.">
-    <title>Cotización del dólar | Paraguay</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="app.js" defer></script>
-  </head>
-  <body>
-    <main class="page">
-      <header class="topbar">
-        <a class="brand" href="./"><span class="brand-icon" aria-hidden="true">$</span>Cotización<span class="brand-country">PY</span></a>
-        <span class="market"><span class="market-dot" aria-hidden="true"></span> Paraguay · USD / PYG</span>
-      </header>
+<section class="panel" aria-labelledby="rates-title">
+  <div class="panel-heading">
+    <div><p class="eyebrow">COMPARÁ LAS COTIZACIONES</p><h2 id="rates-title">Precio de venta</h2></div>
+    <span class="currency">1 USD <span aria-hidden="true">→</span> PYG</span>
+  </div>
+  <div class="rates" id="rates" aria-live="polite" aria-busy="true">
+    <p class="message">Cargando cotizaciones…</p>
+  </div>
 
-      <section class="intro">
-        <p class="eyebrow">MERCADO CAMBIARIO</p>
-        <h1>Dólar de hoy<span>.</span></h1>
-        <p class="subtitle">Cotización de venta publicada por bancos y casas de cambio.</p>
-        <p class="updated" id="updated" aria-live="polite"></p>
-      </section>
-
-      <section class="panel" aria-labelledby="rates-title">
-        <div class="panel-heading">
-          <div><p class="eyebrow">COMPARÁ LAS COTIZACIONES</p><h2 id="rates-title">Precio de venta</h2></div>
-          <span class="currency">1 USD <span aria-hidden="true">→</span> PYG</span>
-        </div>
-        <div class="rates" id="rates" aria-live="polite" aria-busy="true">
-          <p class="message">Cargando cotizaciones…</p>
-        </div>
-      </section>
-
-      <aside class="notice"><span aria-hidden="true">i</span><p>Datos informativos: la cotización puede variar según el canal o la sucursal. Confirmá el valor final directamente con la entidad.</p></aside>
-      <footer>Valores en guaraníes por dólar · Fuentes oficiales <span>Hecho en Paraguay ✦</span></footer>
-    </main>
-  </body>
-</html>
+  <div style="margin-top: 18px; border: 1px solid #26384f; border-radius: 14px; overflow: hidden; background: #0f1b2d;">
+    <iframe
+      src="https://www.maxicambios.com.py//share"
+      width="100%"
+      height="420"
+      style="border: none; display: block;"
+      title="Cotización Maxicambios"
+      loading="lazy">
+    </iframe>
+  </div>
+</section>
