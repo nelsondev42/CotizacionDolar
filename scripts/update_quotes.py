@@ -14,9 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "cotizaciones.json"
 SOURCES = {
     "atlas": ("https://www.bancoatlas.com.py/web", "html"),
-    "itau": ("https://www.itau.com.py/", "html"),
     "ueno": ("https://www.ueno.com.py/cambio-de-moneda/", "ueno"),
-    "maxicambios": ("https://cotizext.maxicambios.com.py/maxicambios4.xml", "xml"),
+    "maxicambios": ("https://www.maxicambios.com.py//share", "maxicambios"),
 }
 
 
@@ -91,21 +90,33 @@ def parse_html(payload, cash=False):
         [
             r"(?:usd|d[oó]lar(?:es)?(?:\s+americano(?:s)?)?).{0,250}?(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
             r"(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
-            r"(?:\bcompra\b.*?\bventa\b.*?\b[\d\s.,]+\b)"
         ]
     )
 
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)
         if match:
-            candidate = match.group(1) if match.lastindex else match.group(0)
-            if match.lastindex:
-                return amount(candidate)
-            # Fallback for generic match that includes multiple labels:
-            venta = re.search(r"venta\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)", match.group(0), flags=re.IGNORECASE)
-            if venta:
-                return amount(venta.group(1))
+            return amount(match.group(1))
     raise ValueError("no se encontró una venta USD etiquetada")
+
+
+def parse_maxicambios(payload):
+    text = clean_text(payload)
+    if not text:
+        raise ValueError("la página de Maxicambios no devolvió contenido legible")
+
+    patterns = [
+        r"(?:d[oó]lar|usd).{0,220}?(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
+        r"(?:venta)\s*(?:gs\.?\s*)?[:\-]?\s*([\d\s.,]+)",
+        r"(?:d[oó]lar|usd).{0,600}?([\d]{3,}(?:[\.,][\d]{3})*(?:[.,][\d]{1,2})?)",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE | re.DOTALL)
+        if match:
+            return amount(match.group(1))
+
+    raise ValueError("no se encontró una venta USD en Maxicambios")
 
 
 def parse_xml(payload):
@@ -119,23 +130,15 @@ def parse_xml(payload):
             sale = coin.findtext("venta")
             if sale:
                 return amount(sale)
-    for coin in root.iter():
-        for item in ("venta", "sale", "valor"):
-            node = coin.find(item)
-            if node is not None and node.text:
-                text = node.text.strip()
-                if re.search(r"\d", text):
-                    return amount(text)
     raise ValueError("el XML no contiene venta USD en efectivo")
 
 
 def read_quote(url, kind):
     payload = fetch(url)
     if kind == "xml":
-        try:
-            return parse_xml(payload)
-        except (ValueError, ET.ParseError):
-            return parse_html(payload, cash=False)
+        return parse_xml(payload)
+    if kind == "maxicambios":
+        return parse_maxicambios(payload)
     if kind == "ueno":
         try:
             return parse_html(payload, cash=True)
@@ -146,9 +149,12 @@ def read_quote(url, kind):
 
 def update():
     data = json.loads(DATA.read_text(encoding="utf-8"))
+    data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") != "itau"]
     now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     errors = []
     for quote in data["quotes"]:
+        if quote["id"] not in SOURCES:
+            continue
         url, kind = SOURCES[quote["id"]]
         quote["url"] = url if quote["id"] != "maxicambios" else "https://www.maxicambios.com.py/"
         try:
@@ -157,7 +163,7 @@ def update():
             quote["status"] = "available"
         except (OSError, TimeoutError, ValueError, ET.ParseError, urllib.error.URLError) as exc:
             errors.append(f'{quote["id"]}: {exc}')
-            quote["status"] = "stale" if quote["sale"] is not None else "unavailable"
+            quote["status"] = "stale" if quote.get("sale") is not None else "unavailable"
     data["updatedAt"] = now
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return errors
