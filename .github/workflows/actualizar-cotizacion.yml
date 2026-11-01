@@ -1,0 +1,27 @@
+name: Actualizar cotización
+
+on:
+  schedule:
+    - cron: "0 12 * * 1-6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Consultar fuentes y refrescar datos
+        run: python3 scripts/update_quotes.py
+      - name: Guardar actualización
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/cotizaciones.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Actualizar cotización diaria"
+            git push
+          fi

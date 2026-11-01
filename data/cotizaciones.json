@@ -1,0 +1,37 @@
+{
+  "updatedAt": null,
+  "quotes": [
+    {
+      "id": "atlas",
+      "name": "Banco Atlas",
+      "url": "https://www.bancoatlas.com.py/web",
+      "sale": null,
+      "observedAt": null,
+      "status": "unavailable"
+    },
+    {
+      "id": "itau",
+      "name": "Itaú",
+      "url": "https://www.itau.com.py/",
+      "sale": null,
+      "observedAt": null,
+      "status": "unavailable"
+    },
+    {
+      "id": "ueno",
+      "name": "Ueno",
+      "url": "https://www.ueno.com.py/cambio-de-moneda/",
+      "sale": null,
+      "observedAt": null,
+      "status": "unavailable"
+    },
+    {
+      "id": "maxicambios",
+      "name": "Maxicambios",
+      "url": "https://www.maxicambios.com.py/",
+      "sale": null,
+      "observedAt": null,
+      "status": "unavailable"
+    }
+  ]
+}
