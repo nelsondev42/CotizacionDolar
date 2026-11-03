@@ -61,10 +61,12 @@ def amount(raw):
             value = value.replace(",", "")
         else:
             value = value.replace(",", ".")
-    elif "." in value and value.count(".") > 1:
+    elif "." in value:
         parts = value.split(".")
         if len(parts[-1]) == 3:
             value = "".join(parts)
+        elif len(parts) > 2:
+            value = "".join(parts[:-1]) + "." + parts[-1]
 
     parsed = float(value)
     if parsed <= 0 or parsed > 20_000_000:
