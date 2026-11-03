@@ -17,6 +17,8 @@ Fuentes oficiales:
 - [Banco Atlas](https://www.bancoatlas.com.py/web)
 - [Ueno](https://www.ueno.com.py/cambio-de-moneda/)
 
+Cada ejecución guarda un snapshot por día en el campo `history` de `data/cotizaciones.json` (se conservan los últimos 7 días) y el sitio dibuja con esos datos el gráfico de evolución semanal. El histórico empieza vacío y se completa a medida que corren las actualizaciones.
+
 No se cargaron valores de ejemplo: el archivo inicial marca las cotizaciones como no disponibles hasta poder obtenerlas y validarlas. Revisá **Actions** luego de publicar; los sitios pueden variar y no se pudo comprobar una ejecución en vivo desde este entorno.
 
 ## Publicar en GitHub Pages

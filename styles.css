@@ -45,6 +45,13 @@ h2 { margin: 8px 0 0; font-size: 21px; font-weight: 650; letter-spacing: -.035em
 .quote-value { color: #f0f7ff; font-size: clamp(20px, 4vw, 25px); font-weight: 720; letter-spacing: -.04em; white-space: nowrap; }
 .unavailable { max-width: 145px; color: #90a0b6; font-size: 12px; line-height: 1.4; }
 .message { grid-column: 1 / -1; margin: 0; padding: 24px; color: var(--muted); text-align: center; }
+.history { margin-top: 20px; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart-grid { stroke: rgb(145 161 184 / 12%); stroke-width: 1; }
+.chart-axis { fill: #718198; font-size: 11px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; color: #a7b5c8; font-size: 11px; }
+.chart-legend > span { display: flex; align-items: center; gap: 7px; }
+.chart-legend i { width: 8px; height: 8px; border-radius: 50%; }
 .error { color: #f2b1b1; }
 .notice { display: flex; gap: 10px; margin: 20px 2px 0; color: #8697ad; font-size: 12px; line-height: 1.6; }
 .notice > span { width: 17px; height: 17px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #4f7293; border-radius: 50%; color: #9dc8eb; font-size: 10px; font-weight: 700; }

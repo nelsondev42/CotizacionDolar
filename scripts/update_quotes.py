@@ -6,12 +6,15 @@ import re
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "cotizaciones.json"
+HISTORY_DAYS = 7
+LOCAL_TZ = ZoneInfo("America/Asuncion")
 SOURCES = {
     "atlas": ("https://www.bancoatlas.com.py/web", "html"),
     "ueno": ("https://www.ueno.com.py/cambio-de-moneda/", "ueno"),
@@ -125,11 +128,33 @@ def read_quote(url, kind):
     return parse_html(payload, cash=False)
 
 
+def record_history(data, moment):
+    """Keep one snapshot per local day so the site can chart the last week."""
+    today = moment.astimezone(LOCAL_TZ).date().isoformat()
+    history = [
+        entry for entry in data.get("history") or []
+        if isinstance(entry, dict)
+        and isinstance(entry.get("date"), str)
+        and isinstance(entry.get("quotes"), dict)
+    ]
+    entry = next((item for item in history if item["date"] == today), None)
+    if entry is None:
+        entry = {"date": today, "quotes": {}}
+        history.append(entry)
+    for quote in data.get("quotes") or []:
+        sale = quote.get("sale")
+        if isinstance(sale, (int, float)) and not isinstance(sale, bool):
+            entry["quotes"][quote["id"]] = sale
+    history.sort(key=lambda item: item["date"])
+    data["history"] = history[-HISTORY_DAYS:]
+
+
 def update():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     # Se eliminan instituciones que ya no exponen una tasa pública estable para scraping.
     data["quotes"] = [quote for quote in data["quotes"] if quote.get("id") not in {"itau", "maxicambios"}]
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    moment = datetime.now(timezone.utc)
+    now = moment.isoformat(timespec="seconds").replace("+00:00", "Z")
     errors = []
     for quote in data["quotes"]:
         if quote["id"] not in SOURCES:
@@ -143,6 +168,7 @@ def update():
         except (OSError, TimeoutError, ValueError, ET.ParseError, urllib.error.URLError) as exc:
             errors.append(f'{quote["id"]}: {exc}')
             quote["status"] = "stale" if quote.get("sale") is not None else "unavailable"
+    record_history(data, moment)
     data["updatedAt"] = now
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return errors
