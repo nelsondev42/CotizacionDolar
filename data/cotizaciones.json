@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-11-04T19:35:19Z",
+  "updatedAt": "2026-11-05T19:44:25Z",
   "quotes": [
     {
       "id": "atlas",
       "name": "Banco Atlas",
       "url": "https://www.bancoatlas.com.py/web",
-      "sale": 6300,
-      "observedAt": "2026-11-04T19:35:19Z",
+      "sale": 6720,
+      "observedAt": "2026-11-05T19:44:25Z",
       "status": "available"
     },
     {
@@ -14,7 +14,7 @@
       "name": "Ueno",
       "url": "https://www.ueno.com.py/cambio-de-moneda/",
       "sale": 6080,
-      "observedAt": "2026-11-04T19:35:19Z",
+      "observedAt": "2026-11-05T19:44:25Z",
       "status": "available"
     }
   ],
@@ -37,6 +37,13 @@
       "date": "2026-11-04",
       "quotes": {
         "atlas": 6300,
+        "ueno": 6080
+      }
+    },
+    {
+      "date": "2026-11-05",
+      "quotes": {
+        "atlas": 6720,
         "ueno": 6080
       }
     }
