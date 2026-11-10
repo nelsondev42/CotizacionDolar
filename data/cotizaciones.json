@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-11-09T22:08:13Z",
+  "updatedAt": "2026-11-10T19:30:05Z",
   "quotes": [
     {
       "id": "atlas",
       "name": "Banco Atlas",
       "url": "https://www.bancoatlas.com.py/web",
       "sale": 6460,
-      "observedAt": "2026-11-09T22:08:13Z",
+      "observedAt": "2026-11-10T19:30:05Z",
       "status": "available"
     },
     {
@@ -19,13 +19,6 @@
     }
   ],
   "history": [
-    {
-      "date": "2026-11-02",
-      "quotes": {
-        "atlas": 6090,
-        "ueno": 6080
-      }
-    },
     {
       "date": "2026-11-03",
       "quotes": {
@@ -63,6 +56,13 @@
     },
     {
       "date": "2026-11-09",
+      "quotes": {
+        "atlas": 6460,
+        "ueno": 6080
+      }
+    },
+    {
+      "date": "2026-11-10",
       "quotes": {
         "atlas": 6460,
         "ueno": 6080
